@@ -125,6 +125,6 @@ jobs:
                if docker exec piskegram-app python -c 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:5000/health", timeout=2)' >/dev/null 2>&1; then ready=true; break; fi; \
                sleep 3; \
              done; \
-             if [ \"$ready\" != true ]; then docker compose logs --tail=100 app; exit 1; fi; \
+             if [ \"\$ready\" != true ]; then docker compose logs --tail=100 app; exit 1; fi; \
              docker compose ps; \
              docker image prune -f"
