@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PiskeGram</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">Piske<span>Gram</span></div>
+
+      <div class="top-actions">
+        <button type="button" class="icon-btn" onclick="scrollToUpload()">＋</button>
+        <div class="avatar">P</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <nav class="nav">
+          <a class="nav-item active" href="/">
+            <span class="nav-icon">⌂</span>
+            <span>Home</span>
+          </a>
+          <a class="nav-item" href="#explore">
+            <span class="nav-icon">◉</span>
+            <span>Explore</span>
+          </a>
+          <a class="nav-item" href="#stories">
+            <span class="nav-icon">◌</span>
+            <span>Stories</span>
+          </a>
+          <a class="nav-item" href="#messages">
+            <span class="nav-icon">✉</span>
+            <span>Messages</span>
+          </a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar avatar-large">P</div>
+          <div>
+            <strong>@piske</strong>
+            <small>Cloud & DevOps learner</small>
+          </div>
+        </div>
+      </aside>
+
+      <section class="feed">
+        <section class="stories" id="stories">
+          {% for name in ["You", "Travel", "Food", "Cloud", "Friends"] %}
+          <div class="story">
+            <div class="story-ring">
+              <div class="story-avatar">{{ name[0] }}</div>
+            </div>
+            <span>{{ name }}</span>
+          </div>
+          {% endfor %}
+        </section>
+
+        <section class="upload-card" id="upload">
+          <div class="upload-heading">
+            <div class="avatar">P</div>
+            <div>
+              <strong>Create a new post</strong>
+              <small>Photo → S3 · Post data → MySQL</small>
+            </div>
+          </div>
+
+          <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
+            <label class="dropzone" for="photo">
+              <div class="upload-icon">↑</div>
+              <strong>Choose a photo</strong>
+              <span>JPG, PNG, GIF or WEBP · Max 10 MB</span>
+              <div id="file-name">No file selected</div>
+            </label>
+
+            <input id="photo" name="photo" type="file" accept="image/*" hidden required />
+
+            <textarea name="caption" maxlength="500" placeholder="Write a caption..."></textarea>
+
+            <div class="form-actions">
+              <button class="post-btn" type="submit">Share Post</button>
+            </div>
+          </form>
+        </section>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+          <div class="flash-stack">
+            {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endwith %}
+
+        {% for post in posts %}
+        <article class="post">
+          <div class="post-header">
+            <div class="avatar">{{ post.username[0]|upper }}</div>
+
+            <div class="post-user">
+              <strong>@{{ post.username }}</strong>
+              <small>{{ post.created_at }}</small>
+            </div>
+
+            <button class="more" type="button">•••</button>
+          </div>
+
+          <img class="post-image" src="{{ post.image_url }}" alt="Post by {{ post.username }}" loading="lazy" />
+
+          <div class="post-body">
+            <div class="post-actions">
+              <form action="{{ url_for('like', post_id=post.id) }}" method="POST">
+                <button class="action" type="submit" title="Like">♡</button>
+              </form>
+              <button class="action" type="button">◌</button>
+              <button class="action" type="button">✈</button>
+              <button class="action save" type="button">♧</button>
+            </div>
+
+            <strong class="likes">{{ post.likes }} likes</strong>
+
+            <p class="caption">
+              <strong>@{{ post.username }}</strong>
+              {{ post.caption }}
+            </p>
+
+            <button class="comments" type="button">View all comments</button>
+
+            <div class="comment-box">
+              <input type="text" placeholder="Add a comment..." />
+              <button type="button">Post</button>
+            </div>
+          </div>
+        </article>
+        {% else %}
+        <div class="empty-state">No posts yet. Upload your first photo! 📸</div>
+        {% endfor %}
+      </section>
+
+      <aside class="right-panel">
+        <div class="profile-card profile-card-compact">
+          <div class="avatar avatar-large">P</div>
+          <div>
+            <strong>@piske</strong>
+            <small>Welcome back 👋</small>
+          </div>
+        </div>
+
+        <div class="panel-box">
+          <h4>Suggested for you</h4>
+
+          <div class="suggestion">
+            <div class="avatar">F</div>
+            <div class="suggestion-text">
+              <strong>foodie</strong>
+              <small>Suggested for you</small>
+            </div>
+            <button type="button" class="follow-btn">Follow</button>
+          </div>
+
+          <div class="suggestion">
+            <div class="avatar">C</div>
+            <div class="suggestion-text">
+              <strong>cloudlab</strong>
+              <small>Suggested for you</small>
+            </div>
+            <button type="button" class="follow-btn">Follow</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </body>
+</html>
+																																																													               <button>
+																																																															                   Follow
+																																																																	           </button>
+
+																																																																		       </div>
+
+
+
+																																																																		           <div class="suggestion">
+
+																																																																				           <div class="avatar">
+																																																																						               T
+																																																																							               </div>
+
+																																																																								               <span>
+
+																																																																										                   <b>
+																																																																													                   traveller
+																																																																															               </b>
+
+																																																																																                   <small>
+																																																																																			                   New to PiskeGram
+																																																																																					               </small>
+
+																																																																																						               </span>
+
+																																																																																							               <button>
+																																																																																									                   Follow
+																																																																																											           </button>
+
+																																																																																												       </div>
+
+
+
+																																																																																												           <div class="suggestion">
+
+																																																																																														           <div class="avatar">
+																																																																																																               C
+																																																																																																	               </div>
+
+																																																																																																		               <span>
+
+																																																																																																				                   <b>
+																																																																																																							                   cloudmaster
+																																																																																																									               </b>
+
+																																																																																																										                   <small>
+																																																																																																													                   Follows you
+																																																																																																															               </small>
+
+																																																																																																																               </span>
+
+																																																																																																																	               <button>
+																																																																																																																			                   Follow
+																																																																																																																					           </button>
+
+																																																																																																																						       </div>
+
+
+
+																																																																																																																						           <p class="footer">
+
+																																																																																																																							           PiskeGram · Flask + MySQL + AWS S3
+
+																																																																																																																								       </p>
+
+
+															   </aside>
+
+
+									    </main>
+
+
+								    </body>
+
+</html>
