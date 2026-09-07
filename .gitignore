@@ -2,24 +2,37 @@
 .env.*
 !.env.example
 
+# AWS / cloud credentials and secrets
+.aws/
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+*.jks
+*.cer
+
+# local runtime and dependency directories
 venv/
 .venv/
 ENV/
 env/
+node_modules/
 
+# Python generated files
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.so
-
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
-.DS_Store
-Thumbs.db
-
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
@@ -29,15 +42,30 @@ Thumbs.db
 *~
 *.un~
 
-*.log
+# OS noise
+.DS_Store
+Thumbs.db
 
+# logs and local runtime data
+*.log
+logs/
 uploads/
 media/
+storage/
 
-# database local files
+# database and dumps
 *.sqlite3
 *.db
+*.sql
+*.dump
+mysqldump*
 
-# local testing / tooling
-.coverage
-htmlcov/
+# Docker local state if used for debugging
+.docker/
+compose.override.yml
+
+# local secrets / deployment config
+*.conf.local
+*.local
+secrets/
+ssl/
