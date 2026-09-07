@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+config.py
 
 # AWS / cloud credentials and secrets
 .aws/

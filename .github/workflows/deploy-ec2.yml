@@ -1,0 +1,102 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python files
+        run: python -m py_compile app.py config.py services/*.py
+
+  build-image:
+    name: Build Docker image
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build application image
+        run: docker build --tag piskegram-app:latest .
+
+      - name: Export application image
+        run: docker save piskegram-app:latest | gzip > piskegram-app.tar.gz
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: piskegram-app-image-${{ github.sha }}
+          path: piskegram-app.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    name: Deploy on EC2
+    needs: build-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EC2_HOST: ${{ secrets['EC2_HOST'] }}
+      EC2_USER: ${{ secrets['EC2_USER'] }}
+      EC2_APP_DIR: ${{ secrets['EC2_APP_DIR'] }}
+    steps:
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: piskegram-app-image-${{ github.sha }}
+          path: deploy-artifact
+
+      - name: Load EC2 SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets['EC2_SSH_KEY'] }}
+
+      - name: Configure known EC2 host
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$EC2_HOST" || { echo "Missing repository secret: EC2_HOST"; exit 1; }
+          test -n "$EC2_USER" || { echo "Missing repository secret: EC2_USER"; exit 1; }
+          test -n "$EC2_APP_DIR" || { echo "Missing repository secret: EC2_APP_DIR"; exit 1; }
+          install -d -m 700 ~/.ssh
+          ssh-keyscan -H "$EC2_HOST" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload Docker image to EC2
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp deploy-artifact/piskegram-app.tar.gz \
+            "$EC2_USER@$EC2_HOST:$EC2_APP_DIR/piskegram-app.tar.gz"
+
+      - name: Load image and restart application
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh "$EC2_USER@$EC2_HOST" \
+            "cd '$EC2_APP_DIR'; \
+             git fetch origin main; \
+             git reset --hard origin/main; \
+             test -f .env; \
+             gunzip -c piskegram-app.tar.gz | docker load; \
+             rm -f piskegram-app.tar.gz; \
+             docker compose config --quiet; \
+             docker compose up -d --no-build --remove-orphans; \
+             docker image prune -f"
