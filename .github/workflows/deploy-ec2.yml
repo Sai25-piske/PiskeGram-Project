@@ -58,6 +58,7 @@ jobs:
       PRIVATE_EC2_HOST: 10.0.1.184
       PRIVATE_EC2_USER: ${{ secrets['EC2_USER'] }}
       EC2_APP_DIR: ${{ secrets['EC2_APP_DIR'] }}
+      DEPLOY_ENV: ${{ secrets['EC2_ENV_FILE'] }}
     steps:
       - name: Download Docker image artifact
         uses: actions/download-artifact@v4
@@ -81,6 +82,16 @@ jobs:
           ssh-keyscan -H "$BASTION_HOST" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      - name: Upload environment file to EC2
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_ENV" || { echo "Missing repository secret: EC2_ENV_FILE"; exit 1; }
+          SSH_OPTIONS=(-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o ProxyJump="$BASTION_USER@$BASTION_HOST")
+          printf '%s\n' "$DEPLOY_ENV" | \
+            ssh "${SSH_OPTIONS[@]}" "$PRIVATE_EC2_USER@$PRIVATE_EC2_HOST" \
+            "cat > /tmp/piskegram.env"
+
       - name: Upload Docker image to EC2
         shell: bash
         run: |
@@ -96,7 +107,10 @@ jobs:
           set -euo pipefail
           SSH_OPTIONS=(-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o ProxyJump="$BASTION_USER@$BASTION_HOST")
           ssh "${SSH_OPTIONS[@]}" "$PRIVATE_EC2_USER@$PRIVATE_EC2_HOST" \
-            "sudo mv /tmp/piskegram-app.tar.gz '$EC2_APP_DIR/piskegram-app.tar.gz'; \
+            "sudo mv /tmp/piskegram.env '$EC2_APP_DIR/.env'; \
+             sudo chown '$PRIVATE_EC2_USER:$PRIVATE_EC2_USER' '$EC2_APP_DIR/.env'; \
+             sudo chmod 600 '$EC2_APP_DIR/.env'; \
+             sudo mv /tmp/piskegram-app.tar.gz '$EC2_APP_DIR/piskegram-app.tar.gz'; \
              sudo chown '$PRIVATE_EC2_USER:$PRIVATE_EC2_USER' '$EC2_APP_DIR/piskegram-app.tar.gz'; \
              cd '$EC2_APP_DIR'; \
              git fetch origin main; \
