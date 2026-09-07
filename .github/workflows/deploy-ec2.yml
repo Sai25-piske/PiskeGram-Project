@@ -88,7 +88,7 @@ jobs:
           SSH_OPTIONS=(-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o ProxyJump="$BASTION_USER@$BASTION_HOST")
           scp "${SSH_OPTIONS[@]}" \
             deploy-artifact/piskegram-app.tar.gz \
-            "$PRIVATE_EC2_USER@$PRIVATE_EC2_HOST:$EC2_APP_DIR/piskegram-app.tar.gz"
+            "$PRIVATE_EC2_USER@$PRIVATE_EC2_HOST:/tmp/piskegram-app.tar.gz"
 
       - name: Load image and restart application
         shell: bash
@@ -96,7 +96,9 @@ jobs:
           set -euo pipefail
           SSH_OPTIONS=(-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o ProxyJump="$BASTION_USER@$BASTION_HOST")
           ssh "${SSH_OPTIONS[@]}" "$PRIVATE_EC2_USER@$PRIVATE_EC2_HOST" \
-            "cd '$EC2_APP_DIR'; \
+            "sudo mv /tmp/piskegram-app.tar.gz '$EC2_APP_DIR/piskegram-app.tar.gz'; \
+             sudo chown '$PRIVATE_EC2_USER:$PRIVATE_EC2_USER' '$EC2_APP_DIR/piskegram-app.tar.gz'; \
+             cd '$EC2_APP_DIR'; \
              git fetch origin main; \
              git reset --hard origin/main; \
              test -f .env; \
