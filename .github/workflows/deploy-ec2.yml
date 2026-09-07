@@ -105,5 +105,10 @@ jobs:
              gunzip -c piskegram-app.tar.gz | docker load; \
              rm -f piskegram-app.tar.gz; \
              docker compose config --quiet; \
-             docker compose up -d --no-build --remove-orphans; \
+             docker compose up -d --no-build --force-recreate --remove-orphans; \
+             if ! docker inspect -f '{{.State.Running}}' piskegram-app 2>/dev/null | grep -qx true; then \
+               docker compose logs --tail=80 app; \
+               exit 1; \
+             fi; \
+             docker compose ps; \
              docker image prune -f"
