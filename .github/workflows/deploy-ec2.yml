@@ -53,8 +53,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      EC2_HOST: ${{ secrets['EC2_HOST'] }}
-      EC2_USER: ${{ secrets['EC2_USER'] }}
+      BASTION_HOST: ${{ secrets['EC2_HOST'] }}
+      BASTION_USER: ${{ secrets['EC2_USER'] }}
+      PRIVATE_EC2_HOST: 10.0.1.184
+      PRIVATE_EC2_USER: ${{ secrets['EC2_USER'] }}
       EC2_APP_DIR: ${{ secrets['EC2_APP_DIR'] }}
     steps:
       - name: Download Docker image artifact
@@ -72,25 +74,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$EC2_HOST" || { echo "Missing repository secret: EC2_HOST"; exit 1; }
-          test -n "$EC2_USER" || { echo "Missing repository secret: EC2_USER"; exit 1; }
+          test -n "$BASTION_HOST" || { echo "Missing repository secret: EC2_HOST"; exit 1; }
+          test -n "$BASTION_USER" || { echo "Missing repository secret: EC2_USER"; exit 1; }
           test -n "$EC2_APP_DIR" || { echo "Missing repository secret: EC2_APP_DIR"; exit 1; }
           install -d -m 700 ~/.ssh
-          ssh-keyscan -H "$EC2_HOST" > ~/.ssh/known_hosts
+          ssh-keyscan -H "$BASTION_HOST" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
       - name: Upload Docker image to EC2
         shell: bash
         run: |
           set -euo pipefail
-          scp deploy-artifact/piskegram-app.tar.gz \
-            "$EC2_USER@$EC2_HOST:$EC2_APP_DIR/piskegram-app.tar.gz"
+          SSH_OPTIONS=(-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o ProxyJump="$BASTION_USER@$BASTION_HOST")
+          scp "${SSH_OPTIONS[@]}" \
+            deploy-artifact/piskegram-app.tar.gz \
+            "$PRIVATE_EC2_USER@$PRIVATE_EC2_HOST:$EC2_APP_DIR/piskegram-app.tar.gz"
 
       - name: Load image and restart application
         shell: bash
         run: |
           set -euo pipefail
-          ssh "$EC2_USER@$EC2_HOST" \
+          SSH_OPTIONS=(-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o ProxyJump="$BASTION_USER@$BASTION_HOST")
+          ssh "${SSH_OPTIONS[@]}" "$PRIVATE_EC2_USER@$PRIVATE_EC2_HOST" \
             "cd '$EC2_APP_DIR'; \
              git fetch origin main; \
              git reset --hard origin/main; \
