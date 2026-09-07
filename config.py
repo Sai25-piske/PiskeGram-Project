@@ -14,9 +14,9 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 DB_CONFIG = {
-    "host": os.getenv("MYSQL_HOST", "localhost"),
-    "port": int(os.getenv("MYSQL_PORT", "3306")),
-    "user": os.getenv("MYSQL_USER", "admin"),
+    "host": os.getenv("MYSQL_HOST", "localhost").strip(),
+    "port": int(os.getenv("MYSQL_PORT", "3306").strip()),
+    "user": os.getenv("MYSQL_USER", "admin").strip(),
     "password": os.environ["MYSQL_PASSWORD"],
-    "database": os.getenv("MYSQL_DATABASE", "piskegram"),
+    "database": os.getenv("MYSQL_DATABASE", "piske-gram").strip(),
 }

@@ -17,6 +17,11 @@ def index():
     return render_template("index.html", posts=posts)
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}, 200
+
+
 @app.post("/upload")
 def upload():
     if "photo" not in request.files:
@@ -66,4 +71,4 @@ def like(post_id):
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
